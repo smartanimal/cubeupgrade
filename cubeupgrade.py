@@ -3,6 +3,8 @@ import os
 import socket
 import struct
 import cube
+import upgraderecord
+from datetime import datetime
 
 # check parameter, at least there should be 3 parameters
 # Parameter 1: 1st IP address of IP range
@@ -30,9 +32,16 @@ if not(os.path.isfile(targetfirmware)):
 	print 'The file of', targetfirmware, 'doesn\'t exist, please check!'
 	sys.exit(0)
 	
+upgraderecord = upgraderecord.upgraderecord('test.db')
 
 
 while ipaddrnum > 0:	
+	iscubeinlist = upgraderecord.find(ipaddressstr)
+	if iscubeinlist < 0:
+		upgraderecord.insert(ipaddressstr, 'no', '')
+	elif iscubeinlist == 1:
+		continue
+		
 	cube = cube.cube(ipaddressstr, targetfirmware)
 	
 	if cube.connect() < 0:
@@ -42,7 +51,9 @@ while ipaddrnum > 0:
 		continue
 		
 	if cube.pushapk() < 0:
-		continue
+		continue	
+	else:
+		upgraderecord.update(ipaddressstr, 'yes', str(datetime.now()))
 		
 	if cube.disconnect() < 0:
 		continue
@@ -53,3 +64,5 @@ while ipaddrnum > 0:
 	
 	ipaddrnum -= 1
 	
+upgraderecord.close()
+
